@@ -1,7 +1,7 @@
 import './App.css';
 import axios from 'axios';
 import React, { useState } from 'react';
-import { pathOr, head, of, equals } from 'ramda';
+import { pathOr, head,equals } from 'ramda';
 
 const App = () => {
  
@@ -77,21 +77,19 @@ const App = () => {
   const baseURL = "https://api.crossref.org";
 
   async function handleSubmit(inputData, index) {
-    try {
-      const response = await axios.get(baseURL + `/works?sort=score&order=desc&rows=20&query.bibliographic=${inputData.body}`)
- 
-      const itemsData = head(pathOr('', ['data', 'message', 'items'], response))
-
-
+    const inputTitle  = pathOr('',['title'],inputData);
+    const inputBody = pathOr('',['body'],inputData);
+     try {
+      const response = await axios.get(baseURL + `/works?sort=score&order=desc&rows=20&query.bibliographic=${inputBody}`)
+       const itemsData = head(pathOr('', ['data', 'message', 'items'], response));
        const title = head(pathOr('', ['title'], itemsData));
-       if (equals(title, inputData.title)) {
-        const DOI = pathOr('', ['DOI'], itemsData);
-        const appendData = `${inputData.body} DOI: ${DOI}`;
 
+       if (equals(title, inputTitle)) {
+        const DOI = pathOr('', ['DOI'], itemsData);
+        const appendData = `${inputBody} DOI: ${DOI}`;
         const items = [...data];
         const item = { ...items[index], appendedData: appendData, disabled: true }
         items[index] = item;
-
         setData(items)
       }
     } catch (error) {
@@ -104,20 +102,26 @@ const App = () => {
   return (
     <div className="container my-5">
       <div className="main border border-dark">
-
         {data && data.map((currentData, index) => {
+          
+          const currentId = pathOr('',['id'],currentData);
+          const currentTitle= pathOr('',['title'],currentData);
+          const currentBody= pathOr('',['body'],currentData);
+          const currentAppendedData= pathOr('',['appendedData'],currentData);
+          const currentDisabled= pathOr('',['disabled'],currentData)
+
           return (
             <div className="row p-5" key={index}>
               <div className="col-lg-8">
-                <div className="para" id={currentData.id} title={currentData.title}>
-                  {currentData.body}
+                <div className="para" id={currentId} title={currentTitle}>
+                  {currentBody}
                 </div>
                 <div className="para pt-5" >
-                  {currentData.appendedData}
+                  {currentAppendedData}
                 </div>
               </div>
               <div className="col-lg-4">
-                <button type="button" disabled={currentData.disabled} onClick={() => handleSubmit(currentData, index)} className="btn btn-primary">CrossRef Check</button>
+                <button type="button" disabled={currentDisabled} onClick={() => handleSubmit(currentData, index)} className="btn btn-primary">CrossRef Check</button>
               </div>
             </div>
           )
